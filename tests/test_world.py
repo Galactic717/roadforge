@@ -5,8 +5,10 @@ from roadforge.world import Point, Road, World, project
 
 
 def test_shortest_route_chooses_lower_distance():
-    world = World({"a": Point(0, 0), "b": Point(30, 0), "c": Point(70, 0), "d": Point(30, 50)},
-                  [Road("a", "b"), Road("b", "c"), Road("a", "d"), Road("d", "c")])
+    world = World(
+        {"a": Point(0, 0), "b": Point(30, 0), "c": Point(70, 0), "d": Point(30, 50)},
+        [Road("a", "b"), Road("b", "c"), Road("a", "d"), Road("d", "c")],
+    )
     assert world.route("a", "c") == ["a", "b", "c"]
 
 
@@ -16,11 +18,17 @@ def test_disconnected_route_is_rejected():
         world.route("a", "c")
 
 
-@pytest.mark.parametrize("bad", [
-    {"nodes": {"a": {"x": 0, "y": 0}, "b": {"x": 1, "y": 0}}, "roads": [{"a": "a", "b": "b"}]},
-    {"nodes": {"a": {"x": 0, "y": 0}, "b": {"x": 50, "y": 0}}, "roads": [{"a": "a", "b": "b"}, {"a": "b", "b": "a"}]},
-    {"nodes": {"a": {"x": float("nan"), "y": 0}, "b": {"x": 50, "y": 0}}, "roads": [{"a": "a", "b": "b"}]},
-])
+@pytest.mark.parametrize(
+    "bad",
+    [
+        {"nodes": {"a": {"x": 0, "y": 0}, "b": {"x": 1, "y": 0}}, "roads": [{"a": "a", "b": "b"}]},
+        {
+            "nodes": {"a": {"x": 0, "y": 0}, "b": {"x": 50, "y": 0}},
+            "roads": [{"a": "a", "b": "b"}, {"a": "b", "b": "a"}],
+        },
+        {"nodes": {"a": {"x": float("nan"), "y": 0}, "b": {"x": 50, "y": 0}}, "roads": [{"a": "a", "b": "b"}]},
+    ],
+)
 def test_rejects_invalid_worlds(bad):
     with pytest.raises(ValueError):
         World.from_dict(bad)

@@ -6,10 +6,12 @@ __pycache__/
 .tmp/
 .cache/
 .browser/
+.hf/
 *.egg-info/
 dist/
 data/world.json
 data/model.json
 data/model_meta.json
+data/*.tmp
 data/training.json
 *.log

@@ -52,8 +52,11 @@ class World:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> World:
-        if (not isinstance(data, dict) or not isinstance(data.get("nodes"), dict)
-                or not isinstance(data.get("roads"), list)):
+        if (
+            not isinstance(data, dict)
+            or not isinstance(data.get("nodes"), dict)
+            or not isinstance(data.get("roads"), list)
+        ):
             raise ValueError("world requires nodes and roads")
         try:
             nodes = {str(k): Point(float(v["x"]), float(v["y"])) for k, v in data["nodes"].items()}
@@ -64,8 +67,11 @@ class World:
         return cls(nodes, roads, width)
 
     def to_dict(self) -> dict[str, Any]:
-        return {"nodes": {k: {"x": p.x, "y": p.y} for k, p in self.nodes.items()},
-                "roads": [{"a": r.a, "b": r.b} for r in self.roads], "width": self.width}
+        return {
+            "nodes": {k: {"x": p.x, "y": p.y} for k, p in self.nodes.items()},
+            "roads": [{"a": r.a, "b": r.b} for r in self.roads],
+            "width": self.width,
+        }
 
     def route(self, start: str, goal: str) -> list[str]:
         if start not in self.nodes or goal not in self.nodes or start == goal:
@@ -98,7 +104,21 @@ class World:
         return min(point.distance(project(point, self.nodes[r.a], self.nodes[r.b])[0]) for r in self.roads)
 
     def on_road(self, point: Point, margin: float = 0) -> bool:
-        return self.road_distance(point) <= self.width / 2 - margin
+        radius = self.width / 2 - margin
+        if radius < 0:
+            return False
+        for road in self.roads:
+            a, b = self.nodes[road.a], self.nodes[road.b]
+            if (
+                point.x < min(a.x, b.x) - radius
+                or point.x > max(a.x, b.x) + radius
+                or point.y < min(a.y, b.y) - radius
+                or point.y > max(a.y, b.y) + radius
+            ):
+                continue
+            if point.distance(project(point, a, b)[0]) <= radius:
+                return True
+        return False
 
     def ray_distance(self, origin: Point, angle: float, maximum: float = 90, step: float = 5) -> float:
         from math import cos, sin

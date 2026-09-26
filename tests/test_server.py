@@ -22,6 +22,9 @@ def test_fleet_tick_and_route_persistence(app, tmp_path):
     initial = app.cars[-1].progress
     app.tick(10)
     assert app.cars[-1].progress > initial
+    app.speed_cap = 3
+    app.tick(10)
+    assert all(car.speed <= 3 for car in app.cars)
     app.set_route("0-3", "4-0")
     assert app.start == "0-3"
     assert json.loads((tmp_path / "world.json").read_text())["goal"] == "4-0"
@@ -29,6 +32,12 @@ def test_fleet_tick_and_route_persistence(app, tmp_path):
     assert (reopened.start, reopened.goal) == ("0-3", "4-0")
     with pytest.raises(ValueError):
         app.tick(11)
+    app.activate_preset("switchback")
+    assert app.start == "s0" and app.goal == "s6"
+    assert app.snapshot()["world_name"] == "Switchback"
+    assert not app.snapshot()["model_ready"]
+    app.activate_preset("city")
+    assert app.snapshot()["model_ready"]
 
 
 def test_http_api_state_validation_and_static_assets(app):
@@ -41,13 +50,19 @@ def test_http_api_state_validation_and_static_assets(app):
         with urlopen(root + "/api/state") as response:
             state = json.load(response)
         assert state["model_ready"]
+        with urlopen(root + "/api/presets") as response:
+            assert len(json.load(response)["presets"]) == 3
         with urlopen(root + "/") as response:
             assert b"Autonomous world" in response.read()
         with pytest.raises(HTTPError) as error:
             urlopen(root + "/../../private")
         assert error.value.code == 404
-        request = Request(root + "/api/route", data=b'{"start":"missing","goal":"0-0"}',
-                          headers={"Content-Type": "application/json"}, method="POST")
+        request = Request(
+            root + "/api/route",
+            data=b'{"start":"missing","goal":"0-0"}',
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
         with pytest.raises(HTTPError) as error:
             urlopen(request)
         assert error.value.code == 400

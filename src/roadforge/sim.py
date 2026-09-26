@@ -93,11 +93,11 @@ def expert(features: list[float]) -> tuple[float, float]:
     return steer, throttle
 
 
-def step(world: World, route: Route, car: Car, steer: float, throttle: float) -> None:
+def step(world: World, route: Route, car: Car, steer: float, throttle: float, speed_cap: float = MAX_SPEED) -> None:
     if not car.alive or car.finished:
         return
     steer, throttle = clamp(steer, -1, 1), clamp(throttle, 0, 1)
-    car.speed = clamp(car.speed + (throttle * 7.0 - 0.7 - car.speed * 0.09) * DT, 0, MAX_SPEED)
+    car.speed = clamp(car.speed + (throttle * 7.0 - 0.7 - car.speed * 0.09) * DT, 0, min(MAX_SPEED, speed_cap))
     car.heading = wrap(car.heading + steer * (0.35 + car.speed * 0.045) * DT)
     car.x += cos(car.heading) * car.speed * DT
     car.y += sin(car.heading) * car.speed * DT

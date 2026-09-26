@@ -15,12 +15,17 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "ruff>=0.11"]
+e2e = ["pytest>=8", "playwright>=1.55"]
 
 [project.scripts]
 roadforge = "roadforge.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/roadforge"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"web" = "roadforge/assets/web"
+"data/pretrained_model.json" = "roadforge/assets/pretrained_model.json"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
