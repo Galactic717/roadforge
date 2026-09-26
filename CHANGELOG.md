@@ -6,4 +6,4 @@
 - Deterministic Python vehicle simulator, road-edge sensors, fleet telemetry, and collision detection.
 - Trainable neural driver with committed reproducible weights and benchmark on three road layouts.
 - Local HTTP API and optional Laya mission advisor with cautious fallback.
-- Windows and Ubuntu unit checks plus a Chromium browser workflow in GitHub Actions.
+- Windows and Ubuntu unit checks, a Chromium browser workflow, and a container smoke test in GitHub Actions.
