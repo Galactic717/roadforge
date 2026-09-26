@@ -8,7 +8,7 @@ Thanks for improving RoadForge. Please open an issue before large architectural 
 python -m venv .venv
 pip install -e ".[dev]"
 pytest -q
-ruff check src tests
+ruff check src tests e2e
 node --check web/app.js
 ```
 

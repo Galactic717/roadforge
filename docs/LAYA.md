@@ -11,7 +11,7 @@ The app asks:
 1. **Choice:** is this a `cautious`, `standard`, or `unknown` driving mission?
 2. **Score:** how much road-condition risk is described?
 
-Only `cautious` and `standard` are accepted. Unknown or confidence below `0.65` falls back to cautious. The resulting speed cap is 10 or 19 simulation units per second. Laya never receives raw image frames, controls the vehicle directly, or changes the road graph.
+Only `cautious` and `standard` are accepted. Unknown or a model score below `0.65` falls back to cautious. The resulting speed cap is 10 or 19 simulation units per second. Laya never receives raw image frames, controls the vehicle directly, or changes the road graph.
 
 ## Install and use
 
@@ -24,4 +24,4 @@ Enter a mission note in the sidebar and press **Analyze mission with Laya**. The
 
 ## Verification status
 
-Automated tests verify the adapter's decision mapping, question schema, and low-confidence fallback with a controlled Router stub. They do not assert a model-quality score. A real Laya inference run requires the optional package and checkpoint on the operator's machine. Threshold `0.65` is an application default, not a validated safety threshold.
+Automated tests verify the adapter's decision mapping, question schema, and low-score fallback with a controlled Router stub. On 26 September 2026, Laya `0.3.20` was also run locally with the example fog and clear-road notes; it returned cautious and standard respectively. The runtime warned that some checkpoint temperatures were invalid and affected scores should be treated as **uncalibrated**. RoadForge labels the field `calibration: "unverified"` and treats `0.65` as an application heuristic, not a validated safety threshold. Neither the example calls nor the tests establish model-quality performance.

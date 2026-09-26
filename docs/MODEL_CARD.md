@@ -27,6 +27,8 @@ roadforge train --seed 7 --samples 1100 --epochs 24 --output data/pretrained_mod
 
 This is a functional demonstration. It does not establish generalization to unseen layouts or physical vehicles. The app supports training on a user-built world so the model can be evaluated there directly.
 
+`roadforge benchmark` also runs the model on two distinct, hand-built road layouts that were not used in training: switchback and zigzag. Both reached the destination in a local development run (99.5% and 99.2% route progress respectively). Automated tests assert arrival on all three presets. These are still small synthetic worlds and do not establish robust out-of-distribution performance.
+
 ## Known limitations
 
 - No pedestrians, traffic lights, dynamic obstacles, weather physics, or right-of-way rules.

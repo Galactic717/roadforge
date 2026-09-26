@@ -6,7 +6,9 @@ Run `roadforge serve` and use `http://127.0.0.1:8765`. JSON endpoints return eit
 | --- | --- | --- |
 | GET | `/api/health` | Liveness check |
 | GET | `/api/state` | World, route, fleet, policy, training status |
+| GET | `/api/presets` | List the included world presets |
 | POST | `/api/world` | Validate and save `{world,start,goal}` |
+| POST | `/api/preset` | Load a preset with `{name}` |
 | POST | `/api/route` | Select `{start,goal}` in the current graph |
 | POST | `/api/fleet` | Reset with `{mode,count}` |
 | POST | `/api/tick` | Advance `{frames}` fixed steps |

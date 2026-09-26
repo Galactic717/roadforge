@@ -6,16 +6,18 @@ RoadForge is a local-first autonomous-driving laboratory written in Python with 
 
 ![RoadForge dashboard with an autonomous fleet on the bundled city map](docs/screenshot.png)
 
+[Switchback world preview](docs/switchback.png) · [Mobile layout](docs/mobile.png)
+
 > RoadForge is a 2D software simulation. It is not a real-vehicle controller or a claim of road safety.
 
 ## What you can do
 
-- **Build a connected world:** click to add intersections and roads, erase segments, undo edits, import/export JSON, and save locally.
+- **Build a connected world:** start from three different road layouts, click to add intersections and roads, erase segments, undo edits, import/export JSON, and save locally.
 - **Plan a route:** select start and destination; Dijkstra's algorithm finds the shortest connected path.
 - **Drive a fleet:** compare a geometric reference driver with a neural policy across 1, 6, or 12 autonomous cars.
 - **Train on your own map:** road-relative examples are generated from the currently selected route. A small neural network learns steering and throttle through backpropagation. The learned weights drive the cars without consulting the reference policy at inference time.
 - **Inspect behavior:** view route progress, speeds, stops, completion, per-car telemetry, and training loss.
-- **Apply a written mission:** when Laya is installed, classify a mission note as standard or cautious driving and cap speed accordingly. Low-confidence results use the cautious setting.
+- **Apply a written mission:** when Laya is installed, classify a mission note as standard or cautious driving and cap speed accordingly. Low-score results use the cautious setting.
 
 ## Quick start
 
@@ -33,6 +35,10 @@ roadforge serve
 
 Open **http://127.0.0.1:8765**. The included city and pretrained neural driver are ready to run. The app binds to localhost by default.
 
+Docker is also supported: `docker build -t roadforge .` followed by `docker run --rm -p 127.0.0.1:8765:8765 roadforge`.
+
+Set `ROADFORGE_DATA_DIR` before starting if you want local worlds and trained weights in a specific folder. Editable source runs default to `data/` in the checkout; installed wheels default to `.roadforge/` under the launch directory.
+
 ### First five minutes
 
 1. Press **Start simulation** to watch the included fleet.
@@ -48,10 +54,19 @@ The **Import** and **Export** buttons exchange a portable JSON file containing t
 ```bash
 roadforge train --epochs 24 --samples 1100 --seed 7 --output data/model.json
 roadforge evaluate --model data/pretrained_model.json
+roadforge benchmark --model data/pretrained_model.json
 roadforge serve --port 8765
 ```
 
 `roadforge train` trains on the included city. The web app trains on whichever valid world and route you built in the editor. A fixed seed makes repeated runs comparable.
+
+`roadforge benchmark` runs the committed model on the city, switchback, and zigzag presets. The latter two have distinct geometry and were not used to fit the bundled weights.
+
+| Preset | Used in training | Learned driver arrived | Completion |
+| --- | --- | ---: | ---: |
+| City grid | yes | yes | 99.4% |
+| Switchback | no | yes | 99.5% |
+| Zigzag | no | yes | 99.2% |
 
 ## How learning works
 
@@ -92,18 +107,18 @@ pip install laya
 roadforge serve
 ```
 
-The first Laya call may download model weights. It is optional; the simulation and neural driving work offline without it after installation. RoadForge does not bundle or upload Laya weights. See [decision layer](docs/LAYA.md) for the exact question schema, fallback, and integration status.
+The first Laya call may download model weights. To keep the checkpoint on a chosen disk, set `HF_HOME` to a folder on that disk before starting RoadForge. It is optional; the simulation and neural driving work offline without it after installation. RoadForge does not bundle or upload Laya weights. See [decision layer](docs/LAYA.md) for the exact question schema, fallback, and integration status.
 
 ## Development
 
 ```bash
 pip install -e ".[dev]"
 pytest -q
-ruff check src tests
+ruff check src tests e2e
 node --check web/app.js
 ```
 
-GitHub Actions runs Python tests on Windows and Ubuntu, syntax-checks the browser code, and enforces Ruff. See [contributing](CONTRIBUTING.md), [security](SECURITY.md), and [API](docs/API.md).
+For a real browser run, install `.[e2e]`, run `python -m playwright install chromium`, then `pytest e2e -q`. GitHub Actions runs Python tests on Windows and Ubuntu, syntax-checks the browser code, enforces Ruff, and runs a Chromium workflow test. See [contributing](CONTRIBUTING.md), [security](SECURITY.md), and [API](docs/API.md).
 
 ## Repository layout
 
