@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0a101b">
+  <title>RoadForge — Autonomous Driving Lab</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark">R<span>F</span></span><div><strong>ROADFORGE</strong><small>AUTONOMOUS DRIVING LAB</small></div></div>
+      <div class="side-section">
+        <div class="eyebrow">WORKSPACE <span>01 / 04</span></div>
+        <h2>Build your world</h2>
+        <p>Draw roads, choose a route, and let a fleet learn to navigate your network.</p>
+        <div class="tool-grid" role="group" aria-label="Map tools">
+          <button class="tool active" data-tool="inspect" title="Inspect cars">↖ <span>Inspect</span></button>
+          <button class="tool" data-tool="draw" title="Draw connected roads">╱ <span>Draw road</span></button>
+          <button class="tool" data-tool="route" title="Select start and destination">◎ <span>Set route</span></button>
+          <button class="tool" data-tool="erase" title="Erase node and connected roads">⌫ <span>Erase</span></button>
+        </div>
+        <div class="small-note" id="tool-hint">Click a car to inspect it. Drag the map to pan.</div>
+        <div class="row gap"><button class="secondary grow" id="undo-btn">↶ Undo</button><button class="secondary grow" id="export-btn">↓ Export</button><button class="secondary grow" id="import-btn">↑ Import</button></div>
+        <input id="import-file" type="file" accept="application/json,.json" hidden>
+      </div>
+      <div class="side-section">
+        <div class="eyebrow">LEARNING <span>02 / 04</span></div>
+        <h2>Train the fleet</h2>
+        <p>The neural driver learns steering and throttle from generated road situations. Evaluate it on a complete route.</p>
+        <div class="input-row"><label for="epochs">Epochs</label><input id="epochs" type="number" min="1" max="80" value="24"></div>
+        <div class="input-row"><label for="samples">Samples</label><input id="samples" type="number" min="100" max="3000" value="1100"></div>
+        <button class="primary full" id="train-btn">✦ Train neural driver</button>
+        <div class="train-status" id="train-status">Ready to train on the current route.</div>
+        <canvas id="loss-chart" width="280" height="86" aria-label="Training loss chart"></canvas>
+      </div>
+      <div class="side-section mission-section">
+        <div class="eyebrow">LOCAL AI <span>03 / 04</span></div>
+        <h2>Mission advisor <span class="beta">LAYA</span></h2>
+        <p>A typed local decision turns a written driving brief into a cautious or standard speed policy.</p>
+        <textarea id="mission-note" rows="3" maxlength="1200" placeholder="Example: Dense fog and pedestrians near the school. Drive slowly."></textarea>
+        <button class="secondary full" id="mission-btn">Analyze mission with Laya</button>
+        <div class="small-note" id="mission-result">Optional local model. Install Laya to enable.</div>
+      </div>
+      <div class="side-footer">LOCAL-FIRST · PYTHON ENGINE · OPEN SOURCE</div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar"><div><span class="breadcrumb">LAB / SIMULATION</span><h1>Autonomous world</h1></div><div class="header-right"><span class="live-dot"></span><span id="engine-state">ENGINE ONLINE</span><a href="https://github.com/Galactic717/roadforge" target="_blank" rel="noreferrer">GitHub ↗</a></div></header>
+      <section class="stat-strip" aria-label="Simulation metrics">
+        <div class="stat"><span>ROUTE PROGRESS</span><strong id="stat-progress">0%</strong><small>Lead vehicle completion</small></div>
+        <div class="stat"><span>FLEET STATUS</span><strong id="stat-fleet">0 / 6</strong><small>Vehicles arrived</small></div>
+        <div class="stat"><span>AVG SPEED</span><strong id="stat-speed">0.0 <em>m/s</em></strong><small>Across active vehicles</small></div>
+        <div class="stat"><span>ACTIVE DRIVER</span><strong id="stat-driver">EXPERT</strong><small id="driver-caption">Geometry reference</small></div>
+      </section>
+      <section class="map-panel"><div class="panel-head"><div><span class="eyebrow">LIVE WORLD</span><h2>City grid <span id="route-label">· route loading</span></h2></div><div class="map-actions"><span class="map-tag">2D CANVAS</span><button id="zoom-out" title="Zoom out">−</button><button id="zoom-in" title="Zoom in">＋</button><button id="zoom-reset" title="Reset view">⌖</button></div></div><div class="canvas-wrap"><canvas id="world-canvas" width="1040" height="800" aria-label="Interactive road world"></canvas><div class="map-hint" id="map-hint">ROAD NETWORK · CLICK A TOOL TO EDIT</div></div></section>
+      <section class="control-panel"><div class="play-group"><button class="play" id="play-btn">▶ <span>Start simulation</span></button><button class="secondary" id="reset-btn">↺ Reset fleet</button></div><div class="driver-group"><label for="driver-mode">DRIVER</label><select id="driver-mode"><option value="expert">Reference expert</option><option value="learned">Learned neural policy</option></select><label for="fleet-size">CARS</label><select id="fleet-size"><option>1</option><option selected>6</option><option>12</option></select></div></section>
+      <div class="bottom-grid"><section class="info-card"><div class="eyebrow">SYSTEM STATUS</div><h3 id="status-title">Simulation ready</h3><p id="status-detail">Use the map tools to create roads or press Start to watch the fleet drive.</p><div class="status-line"><span class="pulse"></span><span id="status-line">Awaiting input</span></div></section><section class="info-card"><div class="eyebrow">SELECTED VEHICLE</div><h3 id="vehicle-title">No vehicle selected</h3><p id="vehicle-detail">Click a car on the map to see live telemetry.</p><div class="telemetry"><span>PROGRESS <b id="vehicle-progress">—</b></span><span>SPEED <b id="vehicle-speed">—</b></span><span>STATE <b id="vehicle-state">—</b></span></div></section></div>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="/app.js" defer></script>
+</body>
+</html>
