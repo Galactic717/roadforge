@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.tmp/
+.cache/
+.browser/
+*.egg-info/
+dist/
+data/world.json
+data/model.json
+data/model_meta.json
+data/training.json
+*.log
