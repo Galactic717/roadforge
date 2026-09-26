@@ -1,0 +1,19 @@
+name: Feature request
+description: Suggest a measurable improvement
+title: "feat: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: usecase
+    attributes:
+      label: Use case
+      description: What road-building or driving problem would this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the interaction and how it could be tested.
+    validations:
+      required: true

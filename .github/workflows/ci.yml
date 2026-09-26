@@ -25,8 +25,24 @@ jobs:
       - name: Python tests
         run: python -m pytest -q
       - name: Python lint
-        run: ruff check src tests
+        run: ruff check src tests e2e
+      - name: Python format
+        run: ruff format --check src tests e2e
       - name: Browser syntax
         run: node --check web/app.js
       - name: Evaluate committed model
         run: roadforge evaluate --model data/pretrained_model.json
+
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install browser test dependencies
+        run: python -m pip install -e ".[e2e]"
+      - name: Install Chromium
+        run: python -m playwright install --with-deps chromium
+      - name: Exercise editor and training in browser
+        run: python -m pytest e2e -q

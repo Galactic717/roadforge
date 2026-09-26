@@ -1,0 +1,30 @@
+name: Bug report
+description: Report a reproducible RoadForge problem
+title: "bug: "
+labels: [bug]
+body:
+  - type: textarea
+    id: behavior
+    attributes:
+      label: What happened?
+      description: Describe the observed and expected behavior.
+      placeholder: After drawing a road and pressing Train, ...
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Include the world JSON and route if the map is relevant.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Python and RoadForge versions
+      placeholder: Python 3.13, RoadForge 0.1.0
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Remove tokens or private information before posting.

@@ -1,0 +1,17 @@
+.git
+.github
+.venv
+.browser
+.hf
+.cache
+.tmp
+__pycache__
+.pytest_cache
+.ruff_cache
+*.pyc
+data/world.json
+data/model.json
+data/model_meta.json
+docs
+e2e
+tests
