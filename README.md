@@ -4,6 +4,8 @@
 
 RoadForge is a local-first autonomous-driving laboratory written in Python with a dependency-free canvas interface in plain JavaScript. It combines an editable road graph, shortest-path routing, deterministic vehicle dynamics, road-edge sensors, a trainable neural driver, live fleet telemetry, and reproducible evaluation. The optional [Laya](https://huggingface.co/convaiinnovations/laya) integration converts a written mission brief into a typed driving-mode decision on your own machine.
 
+![RoadForge dashboard with an autonomous fleet on the bundled city map](docs/screenshot.png)
+
 > RoadForge is a 2D software simulation. It is not a real-vehicle controller or a claim of road safety.
 
 ## What you can do
