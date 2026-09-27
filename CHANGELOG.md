@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Added a paired 21-case preset benchmark, a 56-case generated-road stress mode, SQLite experiment history, and a synchronized browser replay.
+- Replaced fixed-step road-edge rays with analytical intersections against the road capsules.
+- Bound each HTTP server to its own app instance and validated JSON content type and browser Origin on writes.
+- Updated the model card, architecture, README, and demo guidance to describe the simulation and results precisely.
+
 ## 0.1.0 — 2026-09-26
 
 - Interactive canvas world editor with three presets, route selection, undo, and JSON import/export.

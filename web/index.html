@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#0a101b" />
-    <title>RoadForge — Autonomous Driving Lab</title>
+    <title>RoadForge — 2D Road & Policy Lab</title>
     <link rel="stylesheet" href="/style.css" />
   </head>
   <body>
@@ -13,15 +13,14 @@
         <div class="brand">
           <span class="brand-mark">R<span>F</span></span>
           <div>
-            <strong>ROADFORGE</strong><small>AUTONOMOUS DRIVING LAB</small>
+            <strong>ROADFORGE</strong><small>2D ROAD & POLICY LAB</small>
           </div>
         </div>
         <div class="side-section">
           <div class="eyebrow">WORKSPACE <span>01 / 04</span></div>
           <h2>Build your world</h2>
           <p>
-            Draw roads, choose a route, and let a fleet learn to navigate your
-            network.
+            Draw roads, choose a route, and compare two route-following policies.
           </p>
           <div class="preset-row">
             <select id="preset-select" aria-label="World preset">
@@ -73,7 +72,7 @@
         </div>
         <div class="side-section">
           <div class="eyebrow">LEARNING <span>02 / 04</span></div>
-          <h2>Train the fleet</h2>
+          <h2>Train a policy</h2>
           <p>
             The neural driver learns steering and throttle from generated road
             situations. Evaluate it on a complete route.
@@ -106,11 +105,11 @@
           ></canvas>
         </div>
         <div class="side-section mission-section">
-          <div class="eyebrow">LOCAL AI <span>03 / 04</span></div>
-          <h2>Mission advisor <span class="beta">LAYA</span></h2>
+          <div class="eyebrow">OPTIONAL INTEGRATION <span>03 / 04</span></div>
+          <h2>Mission note <span class="beta">LAYA</span></h2>
           <p>
-            A typed local decision turns a written driving brief into a cautious
-            or standard speed policy.
+            If Laya is installed, classify a written note and set a simulation
+            speed cap.
           </p>
           <textarea
             id="mission-note"
@@ -132,7 +131,7 @@
         <header class="topbar">
           <div>
             <span class="breadcrumb">LAB / SIMULATION</span>
-            <h1>Autonomous world</h1>
+            <h1>Road world simulator</h1>
           </div>
           <div class="header-right">
             <span class="live-dot"></span
@@ -156,7 +155,7 @@
           </div>
           <div class="stat">
             <span>AVG SPEED</span
-            ><strong id="stat-speed">0.0 <em>m/s</em></strong
+            ><strong id="stat-speed">0.0 <em>u/s</em></strong
             ><small>Across active vehicles</small>
           </div>
           <div class="stat">
@@ -190,13 +189,21 @@
             <div class="map-hint" id="map-hint">
               ROAD NETWORK · CLICK A TOOL TO EDIT
             </div>
+            <div class="replay-hud" id="replay-hud" hidden>
+              <strong>PAIRED POLICY REPLAY</strong>
+              <span id="replay-time">0.0 s</span>
+              <div><i class="reference-dot"></i> Reference <b id="replay-reference">0%</b></div>
+              <div><i class="learned-dot"></i> Learned <b id="replay-learned">0%</b></div>
+              <div>Position gap <b id="replay-gap">0.0 u</b></div>
+            </div>
           </div>
         </section>
         <section class="control-panel">
           <div class="play-group">
             <button class="play" id="play-btn">
               ▶ <span>Start simulation</span></button
-            ><button class="secondary" id="reset-btn">↺ Reset fleet</button>
+            ><button class="secondary" id="reset-btn">↺ Reset fleet</button
+            ><button class="secondary compare" id="compare-btn" title="Replay both policies from the same start">◈ Compare replay</button>
           </div>
           <div class="driver-group">
             <label for="driver-mode">DRIVER</label

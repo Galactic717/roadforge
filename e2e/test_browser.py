@@ -18,8 +18,8 @@ def test_editor_training_and_mission(tmp_path, monkeypatch):
     monkeypatch.setattr(server, "WORLD_FILE", tmp_path / "world.json")
     monkeypatch.setattr(server, "MODEL_FILE", tmp_path / "model.json")
     monkeypatch.setattr(server, "MODEL_META", tmp_path / "model_meta.json")
-    server.Handler.app = server.App()
-    http = ThreadingHTTPServer(("127.0.0.1", 0), server.Handler)
+    app = server.App()
+    http = ThreadingHTTPServer(("127.0.0.1", 0), server.make_handler(app))
     thread = threading.Thread(target=http.serve_forever, daemon=True)
     thread.start()
     errors = []
@@ -43,8 +43,11 @@ def test_editor_training_and_mission(tmp_path, monkeypatch):
                 "document.querySelector('#train-status').textContent.includes('Complete')", timeout=30000
             )
             assert not page.locator('#driver-mode option[value="learned"]').is_disabled()
+            page.locator("#compare-btn").click()
+            page.locator("#replay-hud").wait_for(state="visible")
+            assert "PAIRED POLICY REPLAY" in page.locator("#replay-hud").inner_text()
 
-            before = len(server.Handler.app.world.roads)
+            before = len(app.world.roads)
             page.locator('[data-tool="draw"]').click()
             rect = page.locator("#world-canvas").bounding_box()
 
@@ -67,6 +70,9 @@ def test_editor_training_and_mission(tmp_path, monkeypatch):
             page.locator("#mission-btn").click()
             page.wait_for_function("document.querySelector('#mission-result').textContent.includes('CAUTIOUS')")
             assert "speed cap 10" in page.locator("#mission-result").inner_text()
+            page.set_viewport_size({"width": 390, "height": 844})
+            assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+            assert page.locator("#compare-btn").is_visible()
             assert not errors
             browser.close()
     finally:

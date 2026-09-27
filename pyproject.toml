@@ -5,12 +5,12 @@ build-backend = "hatchling.build"
 [project]
 name = "roadforge"
 version = "0.1.0"
-description = "Local-first road world builder and autonomous driving laboratory"
+description = "Local 2D road editor and imitation-learning sandbox"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
 authors = [{name = "Galactic717"}]
-keywords = ["autonomous-driving", "simulation", "neural-network", "road-editor"]
+keywords = ["simulation", "imitation-learning", "road-editor", "model-evaluation"]
 dependencies = []
 
 [project.optional-dependencies]

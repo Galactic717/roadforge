@@ -1,8 +1,8 @@
-"""Deterministic bicycle-like vehicle dynamics and route-relative observations."""
+"""Deterministic point-vehicle dynamics and route-relative observations."""
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from math import atan2, cos, pi, sin
 
 from roadforge.world import Point, World, project
@@ -109,11 +109,23 @@ def step(world: World, route: Route, car: Car, steer: float, throttle: float, sp
         car.finished, car.reason = True, "arrived"
 
 
-def rollout(world: World, route: Route, policy, max_steps: int = 1900, start: float = 0) -> Car:
-    car = spawn(route, start)
+def rollout(
+    world: World,
+    route: Route,
+    policy,
+    max_steps: int = 1900,
+    start: float = 0,
+    initial: Car | None = None,
+    trace: list[dict] | None = None,
+) -> Car:
+    car = replace(initial) if initial is not None else spawn(route, start)
+    if trace is not None:
+        trace.append(car.to_dict())
     for _ in range(max_steps):
         steer, throttle = policy(observe(world, route, car))
         step(world, route, car, steer, throttle)
+        if trace is not None:
+            trace.append(car.to_dict())
         if car.finished or not car.alive:
             break
     if car.alive and not car.finished:

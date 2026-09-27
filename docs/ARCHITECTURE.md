@@ -10,15 +10,15 @@ RoadForge has one authoritative Python engine and a thin canvas client.
 
 ## Simulation
 
-The engine advances in fixed `0.1 s` steps. Each car stores position, heading, speed, progress, and terminal state. Steering rotates the car based on speed; throttle accelerates against constant and speed-dependent drag. Leaving the road, colliding with another active car, arriving, or reaching the evaluation time limit ends a run. The model is deliberately simple and deterministic so behavior is inspectable and tests are reproducible.
+The engine advances in fixed `0.1 s` steps. Each car stores position, heading, speed, progress, and terminal state. Steering rotates a point vehicle based on speed; throttle accelerates against constant and speed-dependent drag. There is no wheelbase, tire slip, or Ackermann geometry. Leaving the road, colliding with another active car, arriving, or reaching the evaluation time limit ends a run. The model is deliberately simple and deterministic so behavior is inspectable and tests are reproducible.
 
-Observations contain: target-heading error, route-tangent error, normalized speed, and five normalized ray distances to road edges. The rays look at `−1.1`, `−0.5`, `0`, `0.5`, and `1.1` radians relative to the car. The reference driver steers toward a point 42 units ahead and adjusts throttle for turn severity. It is the teacher, not part of the learned policy at inference time.
+Observations contain: target-heading error, route-tangent error, normalized speed, and five normalized ray distances to road edges. The rays look at `−1.1`, `−0.5`, `0`, `0.5`, and `1.1` radians relative to the car. Ray distance is computed by intersecting a ray with each road capsule and merging overlapping intervals; it is not fixed-step ray marching. The reference driver steers toward a point 42 units ahead and adjusts throttle for turn severity. It is the teacher, not part of the learned policy at inference time.
 
 ## Training
 
 The neural network has 8 inputs, 12 tanh hidden units, and 2 tanh outputs. Output one is steering in `[-1, 1]`; output two maps to throttle in `[0, 1]`. A seeded sampler perturbs pose and speed along the current route and asks the reference driver for actions. Online stochastic gradient descent with backpropagation minimizes squared action error. Each training run stores loss per epoch, reference completion, learned completion, seed, sample count, and epoch count. The server trains on a background thread and exposes progress through `/api/state`.
 
-The first release implements behavioral cloning, not reinforcement learning. Its claims are limited to the included 2D simulation. The architecture intentionally keeps policy observation and physics behind small Python interfaces so future work can add traffic rules, dynamic obstacles, stronger dynamics, curriculum training, and held-out world evaluations.
+The first release implements behavioral cloning, not reinforcement learning. Its claims are limited to the included 2D simulation. `evaluation.py` runs paired closed-loop cases with controlled initial states on three presets, plus five seeded generated layouts in stress mode. It writes each run to two related SQLite tables in one transaction. The model hash identifies the exact weights evaluated. The browser's comparison replay precomputes both trips without mutating the live fleet, then animates their traces. The suites are deterministic and too small to support generalization claims.
 
 ## Local decision layer
 
@@ -26,7 +26,7 @@ The first release implements behavioral cloning, not reinforcement learning. Its
 
 ## Boundaries
 
-- The HTTP server defaults to `127.0.0.1` and serves a fixed allowlist of three web assets.
+- The HTTP server defaults to `127.0.0.1` and serves a fixed allowlist of three web assets. Each HTTP server binds its own app instance. Mutating requests require JSON and reject a mismatched browser Origin.
 - The JSON API limits each request body to 1 MB; world sizes and training parameters are bounded.
 - Roads, routes, models, and mission outputs are validated before use.
 - There is no claim of multiuser isolation or safe exposure to untrusted networks. Run locally.

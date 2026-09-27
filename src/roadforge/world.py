@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from heapq import heappop, heappush
-from math import hypot, isfinite
+from math import cos, hypot, isfinite, sin, sqrt
 from typing import Any
 
 
@@ -120,12 +120,49 @@ class World:
                 return True
         return False
 
-    def ray_distance(self, origin: Point, angle: float, maximum: float = 90, step: float = 5) -> float:
-        from math import cos, sin
+    def ray_distance(self, origin: Point, angle: float, maximum: float = 90) -> float:
+        """Distance to the first exit from the union of road capsules.
 
-        distance = 0.0
-        while distance < maximum:
-            distance = min(maximum, distance + step)
-            if not self.on_road(Point(origin.x + cos(angle) * distance, origin.y + sin(angle) * distance)):
-                return distance
-        return maximum
+        Each road is a rectangular strip with semicircular ends. Intervals
+        along the ray are merged so crossing an intersection stays on road.
+        """
+        if not isfinite(maximum) or maximum < 0:
+            raise ValueError("maximum ray distance must be finite and nonnegative")
+        dx, dy = cos(angle), sin(angle)
+        radius = self.width / 2
+        intervals: list[tuple[float, float]] = []
+
+        def slab(position: float, velocity: float, low: float, high: float) -> tuple[float, float] | None:
+            if abs(velocity) < 1e-12:
+                return (-float("inf"), float("inf")) if low <= position <= high else None
+            first, last = (low - position) / velocity, (high - position) / velocity
+            return min(first, last), max(first, last)
+
+        for road in self.roads:
+            a, b = self.nodes[road.a], self.nodes[road.b]
+            length = a.distance(b)
+            ux, uy = (b.x - a.x) / length, (b.y - a.y) / length
+            px, py = origin.x - a.x, origin.y - a.y
+            longitudinal = slab(px * ux + py * uy, dx * ux + dy * uy, 0, length)
+            lateral = slab(-px * uy + py * ux, -dx * uy + dy * ux, -radius, radius)
+            if longitudinal is not None and lateral is not None:
+                first = max(longitudinal[0], lateral[0], 0)
+                last = min(longitudinal[1], lateral[1], maximum)
+                if first <= last:
+                    intervals.append((first, last))
+            for endpoint in (a, b):
+                ox, oy = origin.x - endpoint.x, origin.y - endpoint.y
+                projection = -(ox * dx + oy * dy)
+                discriminant = projection * projection - (ox * ox + oy * oy - radius * radius)
+                if discriminant >= 0:
+                    half = sqrt(discriminant)
+                    first, last = max(0, projection - half), min(maximum, projection + half)
+                    if first <= last:
+                        intervals.append((first, last))
+
+        end = 0.0
+        for first, last in sorted(intervals):
+            if first > end + 1e-9:
+                break
+            end = max(end, last)
+        return end

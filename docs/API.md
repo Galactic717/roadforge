@@ -12,6 +12,7 @@ Run `roadforge serve` and use `http://127.0.0.1:8765`. JSON endpoints return eit
 | POST | `/api/route` | Select `{start,goal}` in the current graph |
 | POST | `/api/fleet` | Reset with `{mode,count}` |
 | POST | `/api/tick` | Advance `{frames}` fixed steps |
+| POST | `/api/replay` | Precompute paired reference/learned traces for the current route; body `{}` |
 | POST | `/api/train` | Start `{epochs,samples,seed}` training job |
 | POST | `/api/mission` | Laya decision for `{note}` |
 
@@ -29,4 +30,4 @@ Run `roadforge serve` and use `http://127.0.0.1:8765`. JSON endpoints return eit
 }
 ```
 
-`POST /api/world` saves only after route validation succeeds. World limits: 2–250 nodes, 1–600 segments, road width 16–120, coordinate magnitude at most 10,000, and a 1 MB request body. `POST /api/train` accepts 1–80 epochs and 100–3,000 samples. `POST /api/tick` accepts 1–10 frames. Fleet size is 1–12.
+`POST /api/world` saves only after route validation succeeds. World limits: 2–250 nodes, 1–600 segments, road width 16–120, coordinate magnitude at most 10,000, and a 1 MB request body. `POST /api/train` accepts 1–80 epochs and 100–3,000 samples. `POST /api/tick` accepts 1–10 frames. Fleet size is 1–12. `POST /api/replay` requires a model for the current world and route and does not alter the live fleet. Mutating requests require `Content-Type: application/json`; browser requests with a foreign `Origin` receive HTTP 403. This is a local single-user API and has no authentication.

@@ -4,10 +4,10 @@ import argparse
 import json
 from pathlib import Path
 
+from roadforge.evaluation import evaluate_suite, list_runs, save_run
 from roadforge.learning import Network, train
-from roadforge.presets import PRESETS
 from roadforge.sample import DEFAULT_GOAL, DEFAULT_START, sample_world
-from roadforge.server import serve
+from roadforge.server import DATA, PRETRAINED, serve
 from roadforge.sim import Route, expert, rollout
 
 
@@ -21,14 +21,25 @@ def main() -> None:
     fit.add_argument("--epochs", type=int, default=24)
     fit.add_argument("--samples", type=int, default=1100)
     fit.add_argument("--seed", type=int, default=7)
-    fit.add_argument("--output", type=Path, default=Path("data/model.json"))
+    fit.add_argument("--output", type=Path, default=DATA / "model.json")
     test = commands.add_parser("evaluate", help="measure model completion on the included city")
-    test.add_argument("--model", type=Path, default=Path("data/pretrained_model.json"))
-    benchmark = commands.add_parser("benchmark", help="evaluate a model on all included worlds")
-    benchmark.add_argument("--model", type=Path, default=Path("data/pretrained_model.json"))
+    test.add_argument("--model", type=Path, default=PRETRAINED)
+    benchmark = commands.add_parser("benchmark", help="run paired, perturbed closed-loop evaluations")
+    benchmark.add_argument("--model", type=Path, default=PRETRAINED)
+    benchmark.add_argument("--database", type=Path, default=DATA / "experiments.sqlite3")
+    benchmark.add_argument("--max-steps", type=int, default=1900)
+    benchmark.add_argument("--no-save", action="store_true", help="print results without adding an experiment record")
+    benchmark.add_argument("--summary", action="store_true", help="print aggregate results without per-case rows")
+    benchmark.add_argument("--stress", action="store_true", help="include five generated narrow-road layouts")
+    history = commands.add_parser("history", help="list saved benchmark runs")
+    history.add_argument("--database", type=Path, default=DATA / "experiments.sqlite3")
+    history.add_argument("--limit", type=int, default=20)
     args = parser.parse_args()
     if args.command == "serve":
         serve(args.host, args.port)
+        return
+    if args.command == "history":
+        print(json.dumps(list_runs(args.database, args.limit), indent=2))
         return
     world = sample_world()
     route = Route(world, world.route(DEFAULT_START, DEFAULT_GOAL))
@@ -53,33 +64,13 @@ def main() -> None:
         print(json.dumps(result, indent=2))
     else:
         model = Network.load(args.model)
-        rows = []
-        for key, (name, factory) in PRESETS.items():
-            scenario, start, goal = factory()
-            course = Route(scenario, scenario.route(start, goal))
-            reference = rollout(scenario, course, expert)
-            learned = rollout(scenario, course, model.drive)
-            rows.append(
-                {
-                    "world": key,
-                    "name": name,
-                    "reference_arrived": reference.finished,
-                    "learned_arrived": learned.finished,
-                    "learned_completion": round(learned.progress / course.total, 3),
-                    "learned_ticks": learned.ticks,
-                }
-            )
-        print(
-            json.dumps(
-                {
-                    "model": str(args.model),
-                    "results": rows,
-                    "arrivals": sum(row["learned_arrived"] for row in rows),
-                    "total": len(rows),
-                },
-                indent=2,
-            )
-        )
+        result = evaluate_suite(model, args.max_steps, stress=args.stress)
+        result["model"] = str(args.model)
+        if not args.no_save:
+            result["run_id"] = save_run(args.database, args.model, result)
+            result["database"] = str(args.database)
+        output = {key: value for key, value in result.items() if key != "cases"} if args.summary else result
+        print(json.dumps(output, indent=2))
 
 
 if __name__ == "__main__":

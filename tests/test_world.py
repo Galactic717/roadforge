@@ -43,3 +43,16 @@ def test_geometry_and_roundtrip():
     assert world.on_road(world.nodes["0-0"])
     assert not world.on_road(Point(1, 1))
     assert 0 < world.ray_distance(world.nodes["0-0"], 0) <= 90
+
+
+def test_ray_returns_exact_capsule_exit_and_crosses_intersection():
+    straight = World({"a": Point(0, 0), "b": Point(100, 0)}, [Road("a", "b")], width=20)
+    assert straight.ray_distance(Point(50, 0), 0, maximum=100) == pytest.approx(60)
+    assert straight.ray_distance(Point(50, 0), 1.5707963267948966) == pytest.approx(10)
+    assert straight.ray_distance(Point(50, 30), 0) == 0
+    crossing = World(
+        {"a": Point(0, 0), "b": Point(100, 0), "c": Point(100, 100)},
+        [Road("a", "b"), Road("b", "c")],
+        width=20,
+    )
+    assert crossing.ray_distance(Point(50, 0), 0, maximum=100) == pytest.approx(60)

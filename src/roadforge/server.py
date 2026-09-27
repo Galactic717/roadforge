@@ -16,7 +16,7 @@ from roadforge.learning import Network, train
 from roadforge.mission import classify_mission
 from roadforge.presets import PRESETS
 from roadforge.sample import DEFAULT_GOAL, DEFAULT_START, sample_world
-from roadforge.sim import Route, expert, observe, spawn, step
+from roadforge.sim import Route, expert, observe, rollout, spawn, step
 from roadforge.world import Point, World
 
 PACKAGE = Path(__file__).resolve().parent
@@ -120,25 +120,25 @@ class App:
         with self.lock:
             if self.training["running"]:
                 raise ValueError("wait until training finishes before editing the world")
+            document = {"world": world.to_dict(), "start": start, "goal": goal}
+            _write_json(WORLD_FILE, document)
             self.world, self.start, self.goal, self.route = world, start, goal, route
             self.world_name = self.identify_world(world)
             self.mode = "learned" if self.model_key == self.key() else "expert"
             self.training = {"running": False, "epoch": 0, "epochs": 0}
             self.reset_fleet()
-            document = {"world": world.to_dict(), "start": start, "goal": goal}
-            _write_json(WORLD_FILE, document)
 
     def set_route(self, start: str, goal: str) -> None:
         with self.lock:
             if self.training["running"]:
                 raise ValueError("wait until training finishes before changing the route")
             route = Route(self.world, self.world.route(start, goal))
+            document = {"world": self.world.to_dict(), "start": start, "goal": goal}
+            _write_json(WORLD_FILE, document)
             self.start, self.goal, self.route = start, goal, route
             self.mode = "learned" if self.model_key == self.key() else "expert"
             self.training = {"running": False, "epoch": 0, "epochs": 0}
             self.reset_fleet()
-            document = {"world": self.world.to_dict(), "start": start, "goal": goal}
-            _write_json(WORLD_FILE, document)
 
     def activate_preset(self, name: str) -> None:
         if name not in PRESETS:
@@ -168,6 +168,25 @@ class App:
                             left.alive = right.alive = False
                             left.reason = right.reason = "collision"
             return {"cars": [car.to_dict() for car in self.cars]}
+
+    def replay(self) -> dict[str, Any]:
+        """Precompute a paired route replay without changing the live fleet."""
+        with self.lock:
+            if self.model is None or self.model_key != self.key():
+                raise ValueError("train a model for this world and route first")
+            world, route, model = self.world, self.route, self.model
+        result = {"route_length": route.total, "step_seconds": 0.1, "policies": {}}
+        for name, policy in (("reference", expert), ("learned", model.drive)):
+            trace: list[dict] = []
+            car = rollout(world, route, policy, trace=trace)
+            result["policies"][name] = {
+                "trace": trace,
+                "arrived": car.finished,
+                "reason": car.reason,
+                "ticks": car.ticks,
+                "completion": round(car.progress / route.total, 4),
+            }
+        return result
 
     def start_training(self, epochs: int = 24, samples: int = 1100, seed: int = 7) -> None:
         if not 1 <= epochs <= 80 or not 100 <= samples <= 3000 or not 0 <= seed <= 2**31 - 1:
@@ -209,6 +228,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
+        self.send_header("X-Content-Type-Options", "nosniff")
         self.end_headers()
         self.wfile.write(body)
 
@@ -237,6 +257,11 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         try:
+            origin = self.headers.get("Origin")
+            if origin and urlparse(origin).netloc.casefold() != self.headers.get("Host", "").casefold():
+                return self._json(403, {"error": "cross-origin requests are not allowed"})
+            if self.headers.get("Content-Type", "").split(";", 1)[0].strip().lower() != "application/json":
+                return self._json(415, {"error": "Content-Type must be application/json"})
             length = int(self.headers.get("Content-Length", "0"))
             if not 0 <= length <= 1_000_000:
                 raise ValueError("request body too large")
@@ -265,6 +290,8 @@ class Handler(BaseHTTPRequestHandler):
                 response = self.app.snapshot()
             elif path == "/api/tick":
                 response = self.app.tick(int(body.get("frames", 1)))
+            elif path == "/api/replay":
+                response = self.app.replay()
             elif path == "/api/train":
                 self.app.start_training(
                     int(body.get("epochs", 24)), int(body.get("samples", 1100)), int(body.get("seed", 7))
@@ -287,9 +314,13 @@ class Handler(BaseHTTPRequestHandler):
             self._json(500, {"error": "internal server error; see the server log"})
 
 
+def make_handler(app: App) -> type[Handler]:
+    """Bind one app instance to one HTTP server without shared global state."""
+    return type("BoundHandler", (Handler,), {"app": app})
+
+
 def serve(host: str = "127.0.0.1", port: int = 8765) -> None:
-    Handler.app = App()
-    server = ThreadingHTTPServer((host, port), Handler)
+    server = ThreadingHTTPServer((host, port), make_handler(App()))
     print(f"RoadForge is running at http://{host}:{port}", flush=True)
     try:
         server.serve_forever()

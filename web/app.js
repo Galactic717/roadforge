@@ -28,6 +28,9 @@ const S = {
   drag: null,
   mission: null,
   speedCap: 19,
+  replay: null,
+  replayFrame: 0,
+  replayPlaying: false,
 };
 const hints = {
   inspect: "Click a car to inspect it. Drag the map to pan.",
@@ -57,7 +60,14 @@ function toast(message) {
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
+function clearReplay() {
+  S.replay = null;
+  S.replayFrame = 0;
+  S.replayPlaying = false;
+  $("replay-hud").hidden = true;
+}
 function apply(data) {
+  clearReplay();
   S.world = data.world;
   S.start = data.start;
   S.goal = data.goal;
@@ -87,7 +97,7 @@ function updateUI() {
   $("stat-progress").textContent =
     `${Math.round(((lead?.progress || 0) / Math.max(total, 1)) * 100)}%`;
   $("stat-fleet").textContent = `${arrived} / ${S.cars.length}`;
-  $("stat-speed").innerHTML = `${avg.toFixed(1)} <em>m/s</em>`;
+  $("stat-speed").innerHTML = `${avg.toFixed(1)} <em>u/s</em>`;
   $("stat-driver").textContent = S.mode === "learned" ? "NEURAL" : "EXPERT";
   $("driver-caption").textContent =
     S.mode === "learned" ? "Trained local policy" : "Geometry reference";
@@ -96,6 +106,7 @@ function updateUI() {
     : "▶ <span>Start simulation</span>";
   const tr = S.training || {};
   $("train-btn").disabled = !!tr.running;
+  $("compare-btn").disabled = !S.modelReady || !!tr.running;
   if (tr.running) {
     $("train-status").textContent =
       `Training ${tr.epoch}/${tr.epochs} epochs · loss ${tr.loss ?? "—"}`;
@@ -121,7 +132,7 @@ function updateUI() {
       `Heading ${((car.heading * 180) / Math.PI).toFixed(0)}° · ${car.reason}`;
     $("vehicle-progress").textContent =
       `${Math.round((car.progress / Math.max(total, 1)) * 100)}%`;
-    $("vehicle-speed").textContent = `${car.speed.toFixed(1)} m/s`;
+    $("vehicle-speed").textContent = `${car.speed.toFixed(1)} u/s`;
     $("vehicle-state").textContent = car.finished
       ? "ARRIVED"
       : car.alive
@@ -143,7 +154,12 @@ function updateUI() {
         ? "The current route has been completed."
         : "Build a route, train a driver, and compare the learned policy with the reference expert.";
     $("status-line").textContent =
-      `${S.world.roads.length} road segments · ${S.world.nodes && Object.keys(S.world.nodes).length} intersections · speed cap ${S.speedCap} m/s`;
+      `${S.world.roads.length} road segments · ${S.world.nodes && Object.keys(S.world.nodes).length} intersections · speed cap ${S.speedCap} u/s`;
+  }
+  if (S.replay) {
+    $("status-title").textContent = "Paired policy replay";
+    $("status-detail").textContent =
+      "Blue and lime traces show precomputed trips from the same start and route. The live fleet is paused.";
   }
 }
 function drawChart(loss) {
@@ -237,6 +253,7 @@ async function commit(world, start = S.start, goal = S.goal, before = null) {
   }
 }
 function setTool(tool) {
+  if (tool !== "inspect") clearReplay();
   S.tool = tool;
   S.pending = null;
   S.pendingBase = null;
@@ -407,8 +424,23 @@ $("preset-btn").onclick = async () => {
   }
 };
 $("play-btn").onclick = () => {
+  clearReplay();
   S.running = !S.running;
   updateUI();
+};
+$("compare-btn").onclick = async () => {
+  S.running = false;
+  try {
+    const replay = await api("/api/replay", {});
+    S.replay = replay;
+    S.replayFrame = 0;
+    S.replayPlaying = true;
+    $("replay-hud").hidden = false;
+    updateReplayHud();
+    updateUI();
+  } catch (e) {
+    toast(e.message);
+  }
 };
 $("reset-btn").onclick = async () => {
   try {
@@ -457,7 +489,7 @@ $("mission-btn").onclick = async () => {
     S.mission = result;
     S.speedCap = result.speed_cap;
     $("mission-result").textContent =
-      `${result.mode.toUpperCase()} · model score ${Math.round(result.confidence * 100)}% · speed cap ${result.speed_cap} m/s`;
+      `${result.mode.toUpperCase()} · model score ${Math.round(result.confidence * 100)}% · speed cap ${result.speed_cap} u/s`;
     toast("Local mission decision applied.");
     updateUI();
   } catch (e) {
@@ -513,6 +545,39 @@ $("import-file").onchange = async (e) => {
 function line(a, b) {
   ctx.moveTo(a.x, a.y);
   ctx.lineTo(b.x, b.y);
+}
+function updateReplayHud() {
+  if (!S.replay) return;
+  $("replay-time").textContent = `${(S.replayFrame * S.replay.step_seconds).toFixed(1)} s simulated`;
+  const positions = [];
+  for (const name of ["reference", "learned"]) {
+    const policy = S.replay.policies[name];
+    const car = policy.trace[Math.min(S.replayFrame, policy.trace.length - 1)];
+    positions.push(car);
+    const percent = Math.round((car.progress / S.replay.route_length) * 100);
+    $("replay-" + name).textContent = car.finished ? "ARRIVED" : `${percent}%`;
+  }
+  $("replay-gap").textContent = `${Math.hypot(positions[0].x - positions[1].x, positions[0].y - positions[1].y).toFixed(1)} u`;
+}
+function drawReplayPolicy(name, color, width, radius) {
+  const trace = S.replay.policies[name].trace;
+  const last = Math.min(S.replayFrame, trace.length - 1);
+  ctx.beginPath();
+  for (let i = 0; i <= last; i++) {
+    if (i === 0) ctx.moveTo(trace[i].x, trace[i].y);
+    else ctx.lineTo(trace[i].x, trace[i].y);
+  }
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 9;
+  ctx.stroke();
+  const car = trace[last];
+  ctx.beginPath();
+  ctx.arc(car.x, car.y, radius, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.shadowBlur = 0;
 }
 function render() {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -616,7 +681,10 @@ function render() {
         }
       }
     }
-    S.cars.forEach((car, i) => {
+    if (S.replay) {
+      drawReplayPolicy("reference", "#78bbff", 9, 13);
+      drawReplayPolicy("learned", "#e5f96a", 3, 7);
+    } else S.cars.forEach((car, i) => {
       ctx.save();
       ctx.translate(car.x, car.y);
       ctx.rotate(car.heading);
@@ -671,6 +739,13 @@ async function tick() {
   }
 }
 setInterval(tick, 100);
+setInterval(() => {
+  if (!S.replayPlaying || !S.replay) return;
+  const end = Math.max(...Object.values(S.replay.policies).map((policy) => policy.trace.length - 1));
+  S.replayFrame = Math.min(end, S.replayFrame + 6);
+  updateReplayHud();
+  if (S.replayFrame === end) S.replayPlaying = false;
+}, 100);
 setInterval(async () => {
   if (S.training?.running) {
     try {

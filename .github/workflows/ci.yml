@@ -33,6 +33,10 @@ jobs:
         run: node --check web/app.js
       - name: Evaluate committed model
         run: roadforge evaluate --model data/pretrained_model.json
+      - name: Run paired benchmark
+        run: roadforge benchmark --model data/pretrained_model.json --no-save --summary
+      - name: Run generated-road stress benchmark
+        run: roadforge benchmark --model data/pretrained_model.json --no-save --stress --summary
 
   browser:
     runs-on: ubuntu-latest

@@ -38,11 +38,14 @@ def test_fleet_tick_and_route_persistence(app, tmp_path):
     assert not app.snapshot()["model_ready"]
     app.activate_preset("city")
     assert app.snapshot()["model_ready"]
+    replay = app.replay()
+    assert set(replay["policies"]) == {"reference", "learned"}
+    assert replay["policies"]["reference"]["trace"][0] == replay["policies"]["learned"]["trace"][0]
+    assert replay["policies"]["learned"]["arrived"]
 
 
 def test_http_api_state_validation_and_static_assets(app):
-    server.Handler.app = app
-    http = ThreadingHTTPServer(("127.0.0.1", 0), server.Handler)
+    http = ThreadingHTTPServer(("127.0.0.1", 0), server.make_handler(app))
     thread = threading.Thread(target=http.serve_forever, daemon=True)
     thread.start()
     root = f"http://127.0.0.1:{http.server_port}"
@@ -53,7 +56,7 @@ def test_http_api_state_validation_and_static_assets(app):
         with urlopen(root + "/api/presets") as response:
             assert len(json.load(response)["presets"]) == 3
         with urlopen(root + "/") as response:
-            assert b"Autonomous world" in response.read()
+            assert b"Road world simulator" in response.read()
         with pytest.raises(HTTPError) as error:
             urlopen(root + "/../../private")
         assert error.value.code == 404
@@ -66,7 +69,40 @@ def test_http_api_state_validation_and_static_assets(app):
         with pytest.raises(HTTPError) as error:
             urlopen(request)
         assert error.value.code == 400
+        foreign = Request(
+            root + "/api/tick",
+            data=b'{"frames":1}',
+            headers={"Content-Type": "application/json", "Origin": "https://unrelated.example"},
+            method="POST",
+        )
+        with pytest.raises(HTTPError) as error:
+            urlopen(foreign)
+        assert error.value.code == 403
+        wrong_type = Request(root + "/api/tick", data=b'{"frames":1}', method="POST")
+        with pytest.raises(HTTPError) as error:
+            urlopen(wrong_type)
+        assert error.value.code == 415
     finally:
         http.shutdown()
         http.server_close()
         thread.join(timeout=2)
+
+
+def test_server_handlers_keep_app_instances_separate(app, tmp_path):
+    other = server.App()
+    other.set_route("0-3", "4-0")
+    assert server.make_handler(app).app is app
+    assert server.make_handler(other).app is other
+    assert app.start != other.start
+
+
+def test_failed_world_persistence_does_not_change_active_state(app, monkeypatch):
+    before = app.snapshot()
+
+    def fail_write(*_args):
+        raise OSError("disk unavailable")
+
+    monkeypatch.setattr(server, "_write_json", fail_write)
+    with pytest.raises(OSError, match="disk unavailable"):
+        app.set_route("0-3", "4-0")
+    assert app.snapshot() == before
