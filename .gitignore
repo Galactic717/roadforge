@@ -15,4 +15,12 @@ data/model_meta.json
 data/*.tmp
 data/training.json
 data/*.sqlite3*
+legacy/2d-lab/data/world.json
+legacy/2d-lab/data/model.json
+legacy/2d-lab/data/model_meta.json
+legacy/2d-lab/data/training.json
+legacy/2d-lab/data/*.sqlite3*
+legacy/2d-lab/data/*.tmp
 *.log
+node_modules/
+web/*.png

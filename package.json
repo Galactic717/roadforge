@@ -1,0 +1,1 @@
+{"name":"roadforge","version":"1.0.0","private":true,"type":"module","scripts":{"dev":"vite --host 127.0.0.1","build":"vite build","preview":"vite preview --host 127.0.0.1","test":"node --test web/tests/*.test.js","smoke":"node web/tests/smoke.mjs"},"dependencies":{"cesium":"^1.134.0"},"devDependencies":{"vite":"^7.1.0","vite-plugin-cesium":"^1.2.23","playwright":"^1.55.0"}}
