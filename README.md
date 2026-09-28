@@ -17,7 +17,7 @@ Open [localhost:5173](http://127.0.0.1:5173). Enter a route such as **Київ �
 
 **WASD / arrows** take the wheel · **C** switches chase/cockpit · **P** resumes pilot · **Space** pauses · **R** replays with app chrome hidden · **Esc** restores controls. Provider attribution stays visible in capture mode. Capture mode does not record a video.
 
-`npm run build` produces static `dist/`. A [GitHub Pages workflow](.github/workflows/pages.yml) is included; this revision is for local review before publishing. `npm test` checks vehicle and route math; `npx playwright install chromium && npm run smoke` runs the real browser drive at desktop and mobile sizes.
+`npm run build` produces static `dist/`. Every push to `main` publishes [galactic717.github.io/roadforge](https://galactic717.github.io/roadforge/) through the [Pages workflow](.github/workflows/pages.yml). `npm test` checks vehicle and route math; `npx playwright install chromium && npm run smoke` runs the real browser drive at desktop and mobile sizes.
 
 ## 3D world
 

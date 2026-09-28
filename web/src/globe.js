@@ -7,7 +7,14 @@ window.CESIUM_BASE_URL = new URL(`${base}cesium/`, document.baseURI).href;
 const validHeight = h => Number.isFinite(h) && h > -500 && h < 9000;
 const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
 const timeout = (promise, ms, fallback) => Promise.race([promise, new Promise(resolve => setTimeout(() => resolve(fallback), ms))]);
-const plateauCredit = new C.Credit('<a href="https://www.mlit.go.jp/plateau/">Tokyo / Project PLATEAU</a> · <a href="https://www.mlit.go.jp/plateau/site-policy/">CC BY 4.0</a>', true);
+function softwareRenderer() {
+  try {
+    const gl = document.createElement('canvas').getContext('webgl');
+    const info = gl?.getExtension('WEBGL_debug_renderer_info');
+    return /swiftshader|llvmpipe|software|basic render/i.test(info ? gl.getParameter(info.UNMASKED_RENDERER_WEBGL) : '');
+  } catch { return false; }
+}
+const plateauCredit =new C.Credit('<a href="https://www.mlit.go.jp/plateau/">Tokyo / Project PLATEAU</a> · <a href="https://www.mlit.go.jp/plateau/site-policy/">CC BY 4.0</a>', true);
 
 /**
  * Call await ready, then await prepareRoute(route, mission) behind the loading
@@ -27,9 +34,11 @@ export function createGlobe(keys = {}) {
   const scene = viewer.scene;
   viewer.clock.shouldAnimate = false;
   viewer.clock.currentTime = C.JulianDate.fromIso8601('2026-06-21T07:10:00Z');
-  viewer.resolutionScale = Math.min(window.devicePixelRatio || 1, 1.5);
-  scene.highDynamicRange = true;
-  scene.msaaSamples = 4;
+  // Software WebGL (blocklisted GPUs, headless CI) renders MSAA+HDR at <1 fps.
+  const software = softwareRenderer();
+  viewer.resolutionScale = software ? .6 : Math.min(window.devicePixelRatio || 1, 1.5);
+  scene.highDynamicRange = !software;
+  scene.msaaSamples = software ? 1 : 4;
   scene.postProcessStages.fxaa.enabled = true;
   scene.globe.baseColor = C.Color.fromCssColorString('#07101c');
   scene.globe.depthTestAgainstTerrain = true;
