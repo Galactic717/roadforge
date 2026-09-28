@@ -1,0 +1,74 @@
+[
+  {
+    "id": "13102_bldg_lod2",
+    "url": "https://assets.cms.plateau.reearth.io/assets/09/83a3f6-6605-477c-84dc-a973008b5a27/13102_chuo-ku_pref_2025_citygml_1_op_bldg_3dtiles_13102_chuo-ku_lod2/tileset.json",
+    "type_en": "bldg",
+    "texture": true,
+    "lod": "2",
+    "year": 2025
+  },
+  {
+    "id": "13102_brid_lod2",
+    "url": "https://assets.cms.plateau.reearth.io/assets/2f/77dc90-7824-4349-924a-f5f862c430d4/13102_chuo-ku_pref_2025_citygml_1_op_brid_3dtiles_lod2/tileset.json",
+    "type_en": "brid",
+    "texture": true,
+    "lod": "2",
+    "year": 2025
+  },
+  {
+    "id": "13102_tran_lod3",
+    "url": "https://assets.cms.plateau.reearth.io/assets/fd/6d5973-8a48-4470-8665-592242f1a718/13102_chuo-ku_pref_2025_citygml_1_op_tran_3dtiles_lod3/tileset.json",
+    "type_en": "tran",
+    "texture": true,
+    "lod": "3",
+    "year": 2025
+  },
+  {
+    "id": "13103_bldg_lod2",
+    "url": "https://assets.cms.plateau.reearth.io/assets/b5/b5f79e-0c6c-4fc7-adde-6522014243a2/13103_minato-ku_pref_2025_citygml_1_op_bldg_3dtiles_13103_minato-ku_lod2/tileset.json",
+    "type_en": "bldg",
+    "texture": true,
+    "lod": "2",
+    "year": 2025
+  },
+  {
+    "id": "13103_brid_lod2",
+    "url": "https://assets.cms.plateau.reearth.io/assets/4c/2e16d4-56fd-492f-a67b-bbb38e8ef0d0/13103_minato-ku_pref_2025_citygml_1_op_brid_3dtiles_lod2/tileset.json",
+    "type_en": "brid",
+    "texture": true,
+    "lod": "2",
+    "year": 2025
+  },
+  {
+    "id": "13103_tran_lod3",
+    "url": "https://assets.cms.plateau.reearth.io/assets/87/884fad-ac86-4b58-8672-9f3d7bdbd44c/13103_minato-ku_pref_2025_citygml_1_op_tran_3dtiles_lod3/tileset.json",
+    "type_en": "tran",
+    "texture": true,
+    "lod": "3",
+    "year": 2025
+  },
+  {
+    "id": "13108_bldg_lod2",
+    "url": "https://assets.cms.plateau.reearth.io/assets/80/e01efb-831d-4752-a10e-63b407ee2201/13108_koto-ku_pref_2025_citygml_1_op_bldg_3dtiles_13108_koto-ku_lod2/tileset.json",
+    "type_en": "bldg",
+    "texture": true,
+    "lod": "2",
+    "year": 2025
+  },
+  {
+    "id": "13108_brid_lod2",
+    "url": "https://assets.cms.plateau.reearth.io/assets/e5/a12f70-6426-49c1-94d3-0f8299e0d53f/13108_koto-ku_pref_2025_citygml_1_op_brid_3dtiles_lod2/tileset.json",
+    "type_en": "brid",
+    "texture": true,
+    "lod": "2",
+    "year": 2025
+  },
+  {
+    "id": "13108_tran_lod3",
+    "url": "https://assets.cms.plateau.reearth.io/assets/4b/b3c5a4-ebd6-453e-8dda-5cd858547de9/13108_koto-ku_pref_2025_citygml_1_op_tran_3dtiles_lod3/tileset.json",
+    "type_en": "tran",
+    "texture": true,
+    "lod": "3",
+    "year": 2025
+  }
+]

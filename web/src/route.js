@@ -48,9 +48,9 @@ export class Route {
 export async function requestRoute(origin, destination, mapboxToken = '') {
   const coords = `${origin.join(',')};${destination.join(',')}`;
   const url = mapboxToken
-    ? `https://api.mapbox.com/directions/v5/mapbox/driving/${coords}?geometries=geojson&overview=full&steps=true&access_token=${encodeURIComponent(mapboxToken)}`
-    : `https://router.project-osrm.org/route/v1/driving/${coords}?geometries=geojson&overview=full&steps=true`;
-  const response = await fetch(url);
+    ? `https://api.mapbox.com/directions/v5/mapbox/driving/${coords}?geometries=geojson&overview=full&steps=false&access_token=${encodeURIComponent(mapboxToken)}`
+    : `https://router.project-osrm.org/route/v1/driving/${coords}?geometries=geojson&overview=full&steps=false`;
+  const response = await fetch(url, { signal: AbortSignal.timeout(60000) });
   if (!response.ok) throw new Error(`Routing service returned ${response.status}`);
   const data = await response.json();
   if (data.code !== 'Ok' || !data.routes?.[0]) throw new Error(data.message || 'No drivable route found');
@@ -59,7 +59,7 @@ export async function requestRoute(origin, destination, mapboxToken = '') {
 }
 
 export async function cachedMission(id) {
-  const response = await fetch(`/routes/${id}.json`);
+  const response = await fetch(`${import.meta.env.BASE_URL}routes/${id}.json`);
   if (!response.ok) throw new Error('Preset route cache unavailable');
   const data = await response.json();
   return new Route(data.coordinates, { distance: data.distance, duration: data.duration, source: data.source });

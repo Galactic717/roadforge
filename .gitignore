@@ -24,3 +24,7 @@ legacy/2d-lab/data/*.tmp
 *.log
 node_modules/
 web/*.png
+.env
+.env.*
+!.env.example
+docs/captures/
