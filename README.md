@@ -1,56 +1,34 @@
 # RoadForge
 
-**A virtual vehicle on the real Earth.** Open a Cesium globe, pick a real route, and ride with a geometric pilot in GOD, CHASE, or COCKPIT view.
+**Choose a real route. Let the pilot drive it on the globe, or take the wheel.**
 
-![RoadForge driving in Kyiv](docs/roadforge-kyiv.png)
+## Run and drive
 
-## Run on Windows
+Requires Node.js 20.19+ or 22.12+.
 
-Node.js 20.19+ or 22.12+ is required. In PowerShell:
-
-```powershell
+```sh
 git clone https://github.com/Galactic717/roadforge.git
 cd roadforge
 npm install
 npm run dev
 ```
 
-Open **http://127.0.0.1:5173**. Click **KYIV** to start immediately. The first view is satellite Earth; the preset opens a cached real road route and starts the car in PILOT mode. The other presets cover Golden Gate Bridge, Manhattan, Tokyo Bay, and the Amalfi Coast.
+Open [localhost:5173](http://127.0.0.1:5173). Enter a route such as **Київ — Пекін** and press **Поїхали**. You can also enter `хочу маршрут Київ — Пекін`, English `from Kyiv to Beijing`, or latitude/longitude pairs. Common city names resolve locally; other places are searched through Photon only when you submit the route. OSRM supplies the road geometry, then the pilot starts driving automatically. Choose **Tokyo**, **Kyiv**, **Golden Gate** or **Amalfi** for a cached example. Move the pointer to bring back the controls; select the route name to enter a different trip.
 
-## Keys and network services
+**WASD / arrows** take the wheel · **C** switches chase/cockpit · **P** resumes pilot · **Space** pauses · **R** replays with app chrome hidden · **Esc** restores controls. Provider attribution stays visible in capture mode. Capture mode does not record a video.
 
-**No key is required.** Esri World Imagery supplies satellite imagery, the bundled preset routes were fetched from public OSRM, custom routes call public OSRM, place search uses OpenStreetMap Nominatim, and the BEV inset uses OpenStreetMap tiles. Attribution appears in the viewer and inset. Network access is required for map imagery and custom search/routing; cached routes still work if OSRM is down.
+`npm run build` produces static `dist/`. A [GitHub Pages workflow](.github/workflows/pages.yml) is included; this revision is for local review before publishing. `npm test` checks vehicle and route math; `npx playwright install chromium && npm run smoke` runs the real browser drive at desktop and mobile sizes.
 
-Open the gear **POWER-UP** panel to paste optional keys. A Cesium ion token enables World Terrain and, in Cinematic quality, Google Photorealistic 3D Tiles when that asset is enabled on the account. A Mapbox token replaces Nominatim and OSRM for place search and directions. Tokens are stored only in the browser's `localStorage`; do not put them in source control. Provider terms, access, and possible charges apply.
+## 3D world
 
-The public Nominatim and OSRM endpoints are shared community services, so custom route availability and response time can vary. The preset route JSON files under `web/public/routes/` keep the first drive independent of live routing.
+**Tokyo** works without a key using Japan’s open **Project PLATEAU** textured buildings, terrain and GSI aerial imagery. Road and bridge surface meshes are omitted because their broad untextured surfaces obscure the aerial road detail. Other cities have satellite imagery until you connect a provider with 3D coverage. PLATEAU is a textured city model; Google Photorealistic 3D Tiles are a separate, optional source.
 
-## Controls
+For Google 3D, create a [Cesium ion account](https://ion.cesium.com/), add **Google Photorealistic 3D Tiles** and **Cesium World Terrain** to your assets, then create an `assets:read` [access token](https://cesium.com/learn/ion/cesium-ion-access-tokens/) limited to those assets and your app URLs. Open **World settings** at the top right, paste the token, and choose **Save & reload**. A Google Maps **Map Tiles API** key is also supported in the panel.
 
-| Action | Control |
-| --- | --- |
-| Start a drive | Click a preset, or search FROM / TO and click DRIVE |
-| Change camera | GOD / CHASE / COCKPIT buttons or `C` |
-| Take manual control | `WASD`, arrow keys, or touch controls |
-| Resume pilot | PILOT button or `P` |
-| Pause | Pause button or `Space` |
-| Share | Copy the URL hash; it includes mission or route and camera |
+Settings store keys in browser `localStorage`. For local development, copy `.env.example` to `.env.local`; `VITE_CESIUM_ION_TOKEN` and `VITE_GOOGLE_MAPS_API_KEY` are optional. Vite embeds these values in browser code: use restricted public-client credentials, never private keys. Provider coverage, terms and quotas apply. The Google path requires your credential and has not been verified with a live token.
 
-The car uses a fixed-step bicycle model with wheelbase, steering rate, throttle, brake, and drag. PILOT is a pure-pursuit route follower with curvature-aware speed and route reacquisition. The body and spinning wheels are original procedural glTF assets generated by `web/tools/build_car.py`.
+## Limits and credits
 
-## Development
+A visual simulation, not a real vehicle controller or FSD. Routes follow map geometry, without lane-level navigation, traffic or collision detection. Public routing cannot guarantee a drivable connection between arbitrary cities, especially across borders. Ground alignment depends on source data; bridges and mismatched surveys can produce artifacts. Network access and WebGL are required, and initial 3D loading can take time. If Tokyo’s service is unavailable, it falls back to satellite imagery.
 
-```powershell
-npm test
-npm run build
-npx playwright install chromium
-npm run smoke
-```
-
-`npm run smoke` launches Vite, opens Chromium, checks the globe, starts the cached Kyiv drive, and verifies movement, HUD, and camera switching. The product is a vanilla JavaScript Vite app under `web/`. The original Python 2D imitation-learning project is preserved as historical material in `legacy/2d-lab/` and is not the product runtime.
-
-## Limitations
-
-RoadForge is a visual simulation. It does **not** control a real vehicle, perform autonomous driving, perceive traffic, obey live traffic rules, or provide safety guidance. The route follows public map geometry, not lane-level HD maps. Keyless mode uses an ellipsoid surface; real terrain and photogrammetry require a Cesium ion token. Speed limits shown as `~` are heuristics, not legal road-speed data. No traffic, rain, or learned policy is included.
-
-MIT license. See [LICENSE](LICENSE).
+World: [PLATEAU, NASA, Esri and optional providers](web/public/world/ATTRIBUTION.md). Routes: [OpenStreetMap contributors / OSRM](web/public/routes/README.md). Car: original [RoadForge GT, CC0](web/public/models/README.md). App: [MIT](LICENSE). The retired Python lab remains in `legacy/2d-lab/` and is not the homepage.
